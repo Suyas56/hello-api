@@ -17,7 +17,7 @@ jobs:
         run: ls -la
 
       - name: Copy files to VM
-        uses: appleboy/scp-action@v0.1.8
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ vars.VM_HOST }}
           username: ${{ vars.VM_USER }}

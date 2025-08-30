@@ -23,10 +23,7 @@ jobs:
           username: ${{ vars.VM_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          source: |
-            package.json
-            package-lock.json
-            server.js
+          source: package.json,package-lock.json,server.js
           target: "~/hello-api"
           rm: true
           strip_components: 0

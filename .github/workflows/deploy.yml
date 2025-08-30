@@ -21,8 +21,8 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "."
           target: "~/hello-api"
-          strip_components: 1
-          rm: true
+          rm: false             # don’t delete target dir
+          overwrite: true       # overwrite files instead
           exclude: |
             .git/
             .github/

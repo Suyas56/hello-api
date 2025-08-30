@@ -21,8 +21,8 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "."
           target: "~/hello-api"
-          rm: false             # don’t delete target dir
-          overwrite: true       # overwrite files instead
+          strip_components: 1
+          rm: true
           exclude: |
             .git/
             .github/
@@ -40,16 +40,15 @@ jobs:
             cd ~/hello-api
 
             echo "📦 Installing dependencies..."
-            npm install --production
+            npm install --omit=dev
 
-            echo "⚙️ Installing pm2 if not installed..."
-            if ! command -v pm2 &> /dev/null
-            then
-              npm install -g pm2
+            echo "⚙️ Installing pm2 locally if not present..."
+            if [ ! -d "node_modules/pm2" ]; then
+              npm install pm2 --save
             fi
 
             echo "🚀 Starting or restarting app with pm2..."
-            pm2 restart hello-api || pm2 start server.js --name hello-api
-            pm2 save
+            npx pm2 restart hello-api || npx pm2 start server.js --name hello-api
+            npx pm2 save
 
             echo "✅ Deployment finished!"

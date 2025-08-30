@@ -10,21 +10,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Copy files to VM
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ vars.VM_HOST }}
-          username: ${{ vars.VM_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "."
-          target: "/home/${{ vars.VM_USER }}/hello-api"
-          rm: true
-          overwrite: true
-
-      - name: SSH into VM and deploy
+      - name: Deploy to VM via SSH
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ vars.VM_HOST }}
@@ -32,11 +21,24 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             set -e
-            cd ~/hello-api
-            echo "Pulling latest files..."
-            ls -la
-            echo "Installing dependencies..."
+            echo "📂 Navigating to app directory..."
+            cd ~/hello-api || mkdir -p ~/hello-api && cd ~/hello-api
+
+            echo "⬇️ Pulling latest code..."
+            rm -rf *  # Clear old files
+            scp -r $GITHUB_WORKSPACE/* .  # Copy files from repo
+
+            echo "📦 Installing dependencies..."
             npm install --production
-            echo "Restarting app..."
-            pm2 restart hello-api || pm2 start index.js --name hello-api
+
+            echo "⚙️ Installing pm2 if not installed..."
+            if ! command -v pm2 &> /dev/null
+            then
+              npm install -g pm2
+            fi
+
+            echo "🚀 Starting or restarting app with pm2..."
+            pm2 restart hello-api || pm2 start server.js --name hello-api
             pm2 save
+
+            echo "Deployment finished!"

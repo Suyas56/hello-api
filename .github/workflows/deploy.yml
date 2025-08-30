@@ -20,9 +20,14 @@ jobs:
           username: ${{ vars.VM_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          source: "./"
+          source: |
+            package.json
+            package-lock.json
+            server.js
+            src/*
           target: "~/hello-api"
           rm: true
+          strip_components: 0
       - name: Deploy on VM
         uses: appleboy/ssh-action@v0.1.10
         with:

@@ -24,7 +24,6 @@ jobs:
             package.json
             package-lock.json
             server.js
-            src/*
           target: "~/hello-api"
           rm: true
           strip_components: 0

@@ -23,11 +23,6 @@ jobs:
           source: "./"
           target: "~/hello-api"
           rm: true
-          exclude: |
-            .git/
-            .github/
-            node_modules/
-            *.log
       - name: Deploy on VM
         uses: appleboy/ssh-action@v0.1.10
         with:

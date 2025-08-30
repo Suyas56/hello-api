@@ -1,9 +1,9 @@
-name: Deploy Backend API
+name: Deploy Hello API
 
 on:
   push:
     branches:
-      - main   # change if you want another branch to trigger deployment
+      - main
 
 jobs:
   deploy:
@@ -12,11 +12,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
 
       - name: Copy files to VM
         uses: appleboy/scp-action@v0.1.7
@@ -29,15 +24,19 @@ jobs:
           rm: true
           overwrite: true
 
-      - name: Run app on VM
+      - name: SSH into VM and deploy
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ vars.VM_HOST }}
           username: ${{ vars.VM_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            set -e
             cd ~/hello-api
+            echo "Pulling latest files..."
+            ls -la
+            echo "Installing dependencies..."
             npm install --production
-            pm2 stop hello-api || true
-            pm2 start server.js --name hello-api --watch --env production
+            echo "Restarting app..."
+            pm2 restart hello-api || pm2 start index.js --name hello-api
             pm2 save

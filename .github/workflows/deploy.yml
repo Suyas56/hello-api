@@ -1,0 +1,75 @@
+name: Deploy Hello API
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Copy files to VM
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ vars.VM_HOST }}
+          username: ${{ vars.VM_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "."
+          target: "/home/${{ vars.VM_USER }}/hello-api"
+          rm: true
+          overwrite: true
+          exclude: ".git,.github/*.md,node_modules"
+
+      - name: Provision & restart service on VM
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ vars.VM_HOST }}
+          username: ${{ vars.VM_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script_stop: true
+          script: |
+            set -e
+
+           
+            if ! command -v node >/dev/null 2>&1; then
+              curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+              sudo apt-get install -y nodejs
+            fi
+            sudo apt-get install -y authbind
+
+
+            if [ ! -f /etc/authbind/byport/80 ]; then
+              echo | sudo tee /etc/authbind/byport/80
+              sudo chown $USER /etc/authbind/byport/80
+              sudo chmod 500 /etc/authbind/byport/80
+            fi
+
+            cd /home/$USER/hello-api
+            npm install --omit=dev
+
+            
+            sudo tee /etc/systemd/system/hello-api.service >/dev/null <<'EOF'
+            [Unit]
+            Description=Hello API (Node.js)
+            After=network.target
+
+            [Service]
+            User=azureuser
+            WorkingDirectory=/home/azureuser/hello-api
+            ExecStart=/usr/bin/authbind --deep /usr/bin/node server.js
+            Restart=always
+
+            [Install]
+            WantedBy=multi-user.target
+            EOF
+
+            sudo systemctl daemon-reload
+            sudo systemctl enable --now hello-api
+            sudo systemctl restart hello-api
+
+            curl -s http://localhost/sayHello

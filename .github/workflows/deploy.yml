@@ -13,8 +13,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: List files
+        run: ls -la
+
       - name: Copy files to VM
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@v0.1.8
         with:
           host: ${{ vars.VM_HOST }}
           username: ${{ vars.VM_USER }}
@@ -27,6 +30,7 @@ jobs:
           target: "~/hello-api"
           rm: true
           strip_components: 0
+
       - name: Deploy on VM
         uses: appleboy/ssh-action@v0.1.10
         with:

@@ -19,15 +19,11 @@ jobs:
           host: ${{ vars.VM_HOST }}
           username: ${{ vars.VM_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "."
+          port: 22
+          source: "./!(.git|.github|node_modules|*.log)"
           target: "~/hello-api"
           strip_components: 1
           rm: true
-          exclude: |
-            .git/
-            .github/
-            node_modules/
-            *.log
 
       - name: Deploy on VM
         uses: appleboy/ssh-action@v0.1.10

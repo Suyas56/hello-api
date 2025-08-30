@@ -13,7 +13,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Deploy to VM via SSH
+      - name: Copy files to VM
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ vars.VM_HOST }}
+          username: ${{ vars.VM_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "."
+          target: "~/hello-api"
+          strip_components: 1
+          rm: true
+          exclude: |
+            .git/
+            .github/
+            node_modules/
+            *.log
+
+      - name: Deploy on VM
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ vars.VM_HOST }}
@@ -21,12 +37,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             set -e
-            echo "📂 Navigating to app directory..."
-            cd ~/hello-api || mkdir -p ~/hello-api && cd ~/hello-api
-
-            echo "⬇️ Pulling latest code..."
-            rm -rf *  # Clear old files
-            scp -r $GITHUB_WORKSPACE/* .  # Copy files from repo
+            cd ~/hello-api
 
             echo "📦 Installing dependencies..."
             npm install --production
@@ -41,4 +52,4 @@ jobs:
             pm2 restart hello-api || pm2 start server.js --name hello-api
             pm2 save
 
-            echo "Deployment finished!"
+            echo "✅ Deployment finished!"

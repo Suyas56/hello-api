@@ -41,13 +41,18 @@ jobs:
             echo "📦 Installing dependencies..."
             npm install --omit=dev
 
-            echo "⚙️ Installing pm2 locally if not present..."
-            if [ ! -d "node_modules/pm2" ]; then
-              npm install pm2 --save
+            echo "⚙️ Ensuring pm2 is installed..."
+            if ! command -v pm2 &> /dev/null; then
+              npm install -g pm2
             fi
 
-            echo "🚀 Starting or restarting app with pm2..."
-            npx pm2 restart hello-api || npx pm2 start server.js --name hello-api
+            echo "🚀 Deploying with zero downtime..."
+            if pm2 list | grep -q "hello-api"; then
+              npx pm2 reload hello-api
+            else
+              npx pm2 start server.js --name hello-api
+            fi
+
             npx pm2 save
 
-            echo "✅ Deployment finished!"
+            echo "✅ Deployment completed without downtime!"
